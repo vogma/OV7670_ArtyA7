@@ -26,38 +26,34 @@ ARCHITECTURE rtl OF top IS
     SIGNAL uart_byte_tx : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
     SIGNAL edge : STD_LOGIC_VECTOR(3 DOWNTO 0) := (OTHERS => '0');
 
-    COMPONENT clk_wiz_0
+    COMPONENT clk_generator
         PORT (
             reset : IN STD_LOGIC;
             clk_in1 : IN STD_LOGIC;
             locked : OUT STD_LOGIC;
-            clk_out1 : OUT STD_LOGIC;
-            clk_out2 : OUT STD_LOGIC
+            o_clk_vga : OUT STD_LOGIC;
+            o_xclk_ov7670 : OUT STD_LOGIC
         );
     END COMPONENT;
 
-    SIGNAL clk50, clk25 : STD_LOGIC := '0';
+    SIGNAL vga_640x480_clk : STD_LOGIC := '0';
+    SIGNAL xclk_ov7670 : STD_LOGIC := '0';
 BEGIN
 
     rst <= '0';
 
-    --uart_start <= '1' WHEN edge(0) = '1' ELSE '0';
-
-    --uart_byte_tx <= "01000001";
-
-    --ov7670_reset <= '1'; -- Normal mode
     ov7670_pwdn <= '0'; -- Power device up
 
-    clock_mccm : clk_wiz_0
+    clock_mccm : clk_generator
     PORT MAP(
         clk_in1 => clk,
-        clk_out1 => clk50,
-        clk_out2 => clk25,
+        o_clk_vga => vga_640x480_clk,
+        o_xclk_ov7670 => xclk_ov7670,
         reset => '0',
         locked => OPEN
     );
 
-    ov7670_xclk <= clk25;
+    ov7670_xclk <= xclk_ov7670;
 
     SSEG_CONTROLLER : ENTITY work.sseg_controller(arch)
         PORT MAP(
@@ -89,7 +85,7 @@ BEGIN
         btn => btn,
         edge => edge
         );
-        
+
     UART_TX : ENTITY work.uart_tx_own(rtl)
         PORT MAP(
             clk => clk,

@@ -2,6 +2,8 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 USE ieee.numeric_std.ALL;
 
+USE work.common_pkg.ALL;
+
 ENTITY ov7670_fsm IS
     PORT (
         clk : IN STD_LOGIC;
@@ -22,37 +24,14 @@ END ov7670_fsm;
 
 ARCHITECTURE rtl OF ov7670_fsm IS
 
+    --Type decleration
     TYPE state_type IS (powerup, idle, reset_device, i2c_write_register, wait_between_tx, i2c_write_read_register_address, wait_1us,
         i2c_read_reg, wait_1us_after_read);
-    SIGNAL state_reg, state_next : state_type := powerup;
-
-    SIGNAL busy_reg, busy_next, i2c_busy_edge : STD_LOGIC := '0'; -- indicates transaction in progress
-    SIGNAL led_reg, led_next : STD_LOGIC_VECTOR(3 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL counter_reg, counter_next : INTEGER RANGE 0 TO 100000 := 0;
-
-    SIGNAL wait_600ms_reg, wait_600ms_next : INTEGER RANGE 0 TO 60_000_000 := 0;
-    SIGNAL ov7670_reset_sig : STD_LOGIC := '1';
-
-    SIGNAL i2c_ena_reg, i2c_ena_next : STD_LOGIC := '0';
-    SIGNAL busy_prev : STD_LOGIC := '0';
-
-    SIGNAL busy_cnt_reg, busy_cnt_next : INTEGER RANGE 0 TO 3 := 0;
-    SIGNAL reset_busy_cnt : STD_LOGIC := '0';
-
-    CONSTANT I2C_READ : STD_LOGIC := '1';
-    CONSTANT I2C_WRITE : STD_LOGIC := '0';
-    CONSTANT OV7670_ADDR : STD_LOGIC_VECTOR(6 DOWNTO 0) := "0100001";
-    SIGNAL read_reg, read_next : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL done_reg, done_next : STD_LOGIC := '0';
 
     TYPE rom_type IS ARRAY (0 TO 53) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-    SIGNAL register_config : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
-
-    SIGNAL config_finished_reg, config_finished_next : STD_LOGIC := '0';
-
     SIGNAL register_config_rom : rom_type := (
-        x"1205",
+        x"1204",
         x"1100",
         x"0C00",
         x"3E00",
@@ -108,8 +87,27 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         x"b80a"
     );
 
-    SIGNAL rom_index, rom_index_next : INTEGER RANGE 0 TO register_config_rom'length := 0;
+    --Signals
+    SIGNAL reset_busy_cnt : STD_LOGIC := '0';
+    CONSTANT I2C_READ : STD_LOGIC := '1';
+    CONSTANT I2C_WRITE : STD_LOGIC := '0';
+    CONSTANT OV7670_ADDR : STD_LOGIC_VECTOR(6 DOWNTO 0) := "0100001";
+    SIGNAL ov7670_reset_sig : STD_LOGIC := '1';
+    SIGNAL busy_prev : STD_LOGIC := '0';
+    SIGNAL register_config : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
 
+    --Registers
+    SIGNAL state_reg, state_next : state_type := powerup;
+    SIGNAL busy_reg, busy_next, i2c_busy_edge : STD_LOGIC := '0'; -- indicates transaction in progress
+    SIGNAL led_reg, led_next : STD_LOGIC_VECTOR(3 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL counter_reg, counter_next : INTEGER RANGE 0 TO 100000 := 0;
+    SIGNAL wait_600ms_reg, wait_600ms_next : INTEGER RANGE 0 TO 60_000_000 := 0;
+    SIGNAL i2c_ena_reg, i2c_ena_next : STD_LOGIC := '0';
+    SIGNAL read_reg, read_next : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL done_reg, done_next : STD_LOGIC := '0';
+    SIGNAL busy_cnt_reg, busy_cnt_next : INTEGER RANGE 0 TO 3 := 0;
+    SIGNAL config_finished_reg, config_finished_next : STD_LOGIC := '0';
+    SIGNAL rom_index, rom_index_next : INTEGER RANGE 0 TO register_config_rom'length := 0;
 BEGIN
 
     PROCESS (clk, rst)
