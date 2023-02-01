@@ -51,6 +51,8 @@
 */*.runs/synth*/*.xdc
 !*/*.runs/synth*/*utilization*.rpt
 
+OV7670_ArtyA7/*
+
 *.runs/synth*/*.xml
 *.runs/synth*/*.txt
 *.runs/synth*/*.sh
