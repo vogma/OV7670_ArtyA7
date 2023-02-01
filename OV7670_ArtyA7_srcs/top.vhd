@@ -67,7 +67,7 @@ BEGIN
             sseg_o => sseg_o
         );
 
-    read_camera_reg : ENTITY work.read_camera_reg(Behavioral)
+    ov7670_configuration : ENTITY work.ov7670_configuration(Behavioral)
         PORT MAP(
             clk => clk,
             rst => rst,
@@ -78,17 +78,18 @@ BEGIN
             start => edge(0),
             ack_err => OPEN,
             done => uart_start,
-            led => led,
+            config_finished => led(0),
             reg_value => uart_byte_tx
         );
 
-    --led(2 downto 0) <= "000";
+    led(3 DOWNTO 1) <= "000";
 
     EDGE_DETECT : ENTITY work.debounce(Behavioral) PORT MAP(
         clk => clk,
         btn => btn,
         edge => edge
         );
+        
     UART_TX : ENTITY work.uart_tx_own(rtl)
         PORT MAP(
             clk => clk,

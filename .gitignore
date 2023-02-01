@@ -51,6 +51,7 @@
 */*.runs/synth*/*.xdc
 !*/*.runs/synth*/*utilization*.rpt
 
+# do not add files from generated project
 OV7670_ArtyA7/*
 
 *.runs/synth*/*.xml
