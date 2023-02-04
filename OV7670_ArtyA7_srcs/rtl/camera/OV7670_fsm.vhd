@@ -29,7 +29,7 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         i2c_read_reg, wait_1us_after_read);
 
     --53
-    TYPE rom_type IS ARRAY (0 TO 76) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
+    TYPE rom_type IS ARRAY (0 TO 77) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
     SIGNAL register_config_rom : rom_type := (
         -- x"1204",
         -- x"1180",
@@ -88,7 +88,13 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         --source https://github.com/AngeloJacobo/FPGA_OV7670_Camera_Interface/blob/main/src/camera_interface.v
         x"12_04", --set output format to RGB
         x"15_20", --pclk will not toggle during horizontal blank
-        x"40_d0", --RGB565	-- These are values scalped from https:--github.com/jonlwowski012/OV7670_NEXYS4_Verilog/blob/master/ov7670_registers_verilog.v
+        x"40_d0", --RGB565
+
+        --RGB444 
+        x"8C_02",
+
+
+
         x"12_04", -- COM7,     set RGB color output
         x"11_80", -- CLKRC     internal PLL matches input clock
         x"0C_00", -- COM3,     default settings
