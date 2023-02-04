@@ -8,6 +8,8 @@ ENTITY top IS
         uart_txd_in : IN STD_LOGIC;
         scl : INOUT STD_LOGIC;
         sda : INOUT STD_LOGIC;
+        ov7670_vsync : IN STD_LOGIC;
+        ov7670_href : IN STD_LOGIC;
         ov7670_xclk : OUT STD_LOGIC;
         uart_rxd_out : OUT STD_LOGIC;
         btn : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
@@ -36,9 +38,27 @@ ARCHITECTURE rtl OF top IS
         );
     END COMPONENT;
 
+    SIGNAL sseg_byte : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL href_cnt : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL config_finished : STD_LOGIC := '0';
+
+    SIGNAL buf1_vsync, buf2_vsync, buf1_href, buf2_href : STD_LOGIC := '0';
+
     SIGNAL vga_640x480_clk : STD_LOGIC := '0';
     SIGNAL xclk_ov7670 : STD_LOGIC := '0';
 BEGIN
+
+    --?? metastability of external signals
+    PROCESS (clk)
+    BEGIN
+        IF rising_edge(clk) THEN
+            buf1_vsync <= ov7670_vsync;
+            buf2_vsync <= buf1_vsync;
+
+            buf1_href <= ov7670_href;
+            buf2_href <= buf1_href;
+        END IF;
+    END PROCESS;
 
     rst <= '0';
 
@@ -58,7 +78,7 @@ BEGIN
     SSEG_CONTROLLER : ENTITY work.sseg_controller(arch)
         PORT MAP(
             clk => clk,
-            data_i => unsigned(uart_byte_tx),
+            data_i => unsigned(href_cnt(7 DOWNTO 0)),
             sseg_cs_o => sseg_cs_o,
             sseg_o => sseg_o
         );
@@ -74,12 +94,25 @@ BEGIN
             start => edge(0),
             ack_err => OPEN,
             done => uart_start,
-            config_finished => led(0),
+            config_finished => config_finished,
             reg_value => uart_byte_tx
         );
 
-    led(3 DOWNTO 1) <= "000";
+    --led(0) <= config_finished;
+    --led(3 DOWNTO 1) <= "000";
+    led <= href_cnt(11 DOWNTO 8);
 
+    ov7670_capture : ENTITY work.ov7670_capture(rtl) PORT MAP(
+        clk => clk,
+        rst => rst,
+        config_finished => config_finished,
+        ov7670_vsync => buf2_vsync,
+        ov7670_href => buf2_href,
+        start => edge(3),
+        start_href => edge(2),
+        vsync_cnt_o => sseg_byte,
+        href_cnt_o => href_cnt
+        );
     EDGE_DETECT : ENTITY work.debounce(Behavioral) PORT MAP(
         clk => clk,
         btn => btn,
