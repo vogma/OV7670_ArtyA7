@@ -29,14 +29,27 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         i2c_read_reg, wait_1us_after_read);
 
         --53
-    TYPE rom_type IS ARRAY (0 TO 1) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
+    TYPE rom_type IS ARRAY (0 TO 7) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 
     --wenn nur die ersten beiden Register beschrieben werden, liefert die Kamera 15 FPs (vsync falling edge x15),
     -- wenn alle geschrieben werden, dann liefert die Kamera 57 Bilder => Fehler in PLL Config
     SIGNAL register_config_rom : rom_type := (
         x"1204",
-        x"1180"
+        x"1180",
+        x"6b0a",
+        x"2a00",
+        x"2b00",
+        x"9200",
+        x"9300",
+        x"3b0a"
+--         write_i2c(0x11, 0x80);
+-- write_i2c(0x6b, 0x0a);
+-- write_i2c(0x2a, 0x00);
+-- write_i2c(0x2b, 0x00);
+-- write_i2c(0x92, 0x00);
+-- write_i2c(0x93, 0x00);
+-- write_i2c(0x3b, 0x0a);
         -- x"0C00",
         -- x"3E00",
         -- x"8C00",
