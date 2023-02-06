@@ -19,8 +19,13 @@ ENTITY top IS
         led : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
         ov7670_pwdn : OUT STD_LOGIC;
         ov7670_reset : OUT STD_LOGIC;
-        sseg_o : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
-        sseg_cs_o : OUT STD_LOGIC
+        --sseg_o : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
+        --sseg_cs_o : OUT STD_LOGIC;
+        VGA_HS_O : OUT STD_LOGIC;
+        VGA_VS_O : OUT STD_LOGIC;
+        VGA_R : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+        VGA_B : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+        VGA_G : OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
     );
 END top;
 
@@ -82,7 +87,6 @@ BEGIN
 
     pixel_data_byte <= pixel_data(15 DOWNTO 8) WHEN sw(0) = '0' ELSE
         pixel_data(7 DOWNTO 0);
-
     --klappe zu 
     --39e9  00111 001111 01001
 
@@ -97,14 +101,12 @@ BEGIN
 
     --gelb  
     --8ea7 10001 110101 00111
-    
+
     --grün
     --47eb  01000 111111 01011  
 
     --blau 
     --441f 01000 100000 11111 --sieht gut aus
-
-
     clock_mccm : clk_generator
     PORT MAP(
         clk_in1 => clk,
@@ -123,8 +125,10 @@ BEGIN
             --data_i => unsigned(sseg_byte),
             --data_i => unsigned(href_cnt(7 DOWNTO 0)),
             data_i => unsigned(pixel_data_byte),
-            sseg_cs_o => sseg_cs_o,
-            sseg_o => sseg_o
+            --sseg_cs_o => sseg_cs_o,
+            sseg_cs_o => open,
+            --sseg_o => sseg_o
+            sseg_o => open
         );
 
     ov7670_configuration : ENTITY work.ov7670_configuration(Behavioral)
@@ -179,6 +183,17 @@ BEGIN
             i_byte => uart_byte_tx,
             o_serial => uart_serial,
             o_done => uart_done_tx
+        );
+
+    vga_testpattern : ENTITY work.vga_testpattern(rtl)
+        PORT MAP(
+            clk => clk,
+            rst => rst,
+            VGA_HS_O => VGA_HS_O,
+            VGA_VS_O => VGA_VS_O,
+            VGA_R => VGA_R,
+            VGA_G => VGA_G,
+            VGA_B => VGA_B
         );
 
     uart_rxd_out <= uart_serial;

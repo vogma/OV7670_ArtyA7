@@ -25,7 +25,7 @@ END ov7670_capture;
 ARCHITECTURE rtl OF ov7670_capture IS
 
     TYPE state_type IS (
-        idle, start_capturing, wait_for_new_frame, frame_finished, capture_line, capture_rgb_byte
+        idle, start_capturing, wait_for_new_frame, frame_finished, capture_line, capture_rgb_byte, write_to_bram
     );--idle, capture, wait_for_vsync, capture_href, wait_for_frame_start, wait_for_href, capture_pclk);
 
     --registers
@@ -44,7 +44,49 @@ ARCHITECTURE rtl OF ov7670_capture IS
     SIGNAL href_rising_edge, href_falling_edge : STD_LOGIC := '0';
     SIGNAL pclk_edge : STD_LOGIC := '0';
 
+    COMPONENT blk_mem_gen_1 IS
+        PORT (
+            clka : IN STD_LOGIC;
+            ena : IN STD_LOGIC;
+            wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            addra : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+            dina : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
+            clkb : IN STD_LOGIC;
+            enb : IN STD_LOGIC;
+            addrb : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+            doutb : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+        );
+    END COMPONENT;
+
+    SIGNAL ena : STD_LOGIC := '0';
+    SIGNAL wea : STD_LOGIC_VECTOR(0 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL addra : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL dina : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL enb : STD_LOGIC := '0';
+    SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+
+    SIGNAL bram_address_reg, bram_address_next : unsigned(18 DOWNTO 0) := (OTHERS => '0');
+
 BEGIN
+
+    bram : blk_mem_gen_1
+    PORT MAP(
+        clka => clk,
+        wea => wea,
+        ena => ena,
+        addra => addra,
+        dina => dina,
+        clkb => clk,
+        enb => enb,
+        addrb => addrb,
+        doutb => doutb
+    );
+
+    ena <= '1';
+
+    addra <= STD_LOGIC_VECTOR(bram_address_reg);
+
     vsync_next <= ov7670_vsync;
     vsync_falling_edge <= '1' WHEN vsync_reg = '1' AND ov7670_vsync = '0' ELSE
         '0'; --detect falling edge of external vsync signal (start of frame) 
@@ -72,6 +114,7 @@ BEGIN
                 pclk_reg <= '0';
                 pclk_cnt_reg <= (OTHERS => '0');
                 clk_reg <= 0;
+                bram_address_reg <= (OTHERS => '0');
                 href_reg <= '0';
                 href_cnt_reg <= 0;
                 rgb_reg <= (OTHERS => '0');
@@ -83,6 +126,7 @@ BEGIN
                 vsync_reg <= vsync_next;
                 href_reg <= href_next;
                 rgb_reg <= rgb_next;
+                bram_address_reg <= bram_address_next;
                 pclk_reg <= pclk_next;
                 pclk_cnt_reg <= pclk_cnt_next;
                 href_cnt_reg <= href_cnt_next;
@@ -91,7 +135,7 @@ BEGIN
         END IF;
     END PROCESS;
 
-    comb : PROCESS (state_reg, vsync_cnt_reg, ov7670_data, pixel_reg, rgb_reg, pclk_cnt_reg, clk_reg, start_href, pclk_edge, href_cnt_reg, href_rising_edge, start, vsync_falling_edge, vsync_rising_edge, config_finished)
+    comb : PROCESS (state_reg, vsync_cnt_reg, bram_address_reg, ov7670_data, pixel_reg, rgb_reg, pclk_cnt_reg, clk_reg, start_href, pclk_edge, href_cnt_reg, href_rising_edge, start, vsync_falling_edge, vsync_rising_edge, config_finished)
     BEGIN
         state_next <= state_reg;
         vsync_cnt_next <= vsync_cnt_reg;
@@ -100,7 +144,10 @@ BEGIN
         pclk_cnt_next <= pclk_cnt_reg;
         rgb_next <= rgb_reg;
         pixel_next <= pixel_reg;
+        bram_address_next <= bram_address_reg;
         frame_finished_o <= '0'; --debug
+        wea <= "0";
+        dina <= (OTHERS => '0');
         CASE state_reg IS
 
             WHEN idle =>
@@ -123,9 +170,9 @@ BEGIN
             WHEN capture_line =>
                 IF pclk_edge = '1' THEN
 
-                    IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
-                        rgb_next(15 DOWNTO 8) <= ov7670_data; --capture first byte of pixel data
-                    END IF;
+                    --IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
+                    rgb_next(15 DOWNTO 8) <= ov7670_data; --capture first byte of pixel data
+                    --END IF;
                     state_next <= capture_rgb_byte;
                 END IF;
 
@@ -133,10 +180,12 @@ BEGIN
                 IF pclk_edge = '1' THEN
 
                     --debug: just save one pixel of the whole frame
-                    IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
-                        rgb_next(7 DOWNTO 0) <= ov7670_data; --capture first byte of pixel data
-                    END IF;
+                    --IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
+                    rgb_next(7 DOWNTO 0) <= ov7670_data; --capture first byte of pixel data
+                    --END IF;
+
                     pixel_next <= pixel_reg + 1; --keep track of current pixel position in line
+
                     IF pixel_reg = 639 THEN --line finished
                         href_cnt_next <= href_cnt_reg + 1;
 
@@ -147,9 +196,15 @@ BEGIN
                         END IF;
 
                     ELSE
-                        state_next <= capture_line;
+                        state_next <= write_to_bram;
                     END IF;
                 END IF;
+
+            WHEN write_to_bram =>
+                wea <= "1";
+                dina <= rgb_reg(11 DOWNTO 0);
+                bram_address_next <= bram_address_reg + 1;
+                state_next <= capture_line;
 
             WHEN frame_finished =>
                 frame_finished_o <= '1';
