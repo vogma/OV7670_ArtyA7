@@ -64,7 +64,6 @@ OV7670_ArtyA7/*
 
 OV7670_ArtyA7_srcs/ip/**/ip
 
-OV7670_ArtyA7_srcs/ip/clk_gen/ip/clk_generator_1/
 
 ### project impl
 */*.runs/impl*/*.xml
