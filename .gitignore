@@ -54,6 +54,7 @@
 # do not add files from generated project
 OV7670_ArtyA7/*
 
+*.toml
 *.runs/synth*/*.xml
 *.runs/synth*/*.txt
 *.runs/synth*/*.sh
