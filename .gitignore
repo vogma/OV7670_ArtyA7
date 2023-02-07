@@ -63,7 +63,7 @@ OV7670_ArtyA7/*
 *.runs/synth*/*.xdc
 !*.runs/synth*/*utilization*.rpt
 
-OV7670_ArtyA7_srcs/ip/**/ip
+OV7670_ArtyA7_srcs/ip/**/*/
 
 
 ### project impl
