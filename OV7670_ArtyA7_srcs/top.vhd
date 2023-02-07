@@ -36,6 +36,8 @@ ARCHITECTURE rtl OF top IS
     SIGNAL uart_byte_tx : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
     SIGNAL edge : STD_LOGIC_VECTOR(3 DOWNTO 0) := (OTHERS => '0');
 
+    SIGNAL pxl_clk : STD_LOGIC := '0';
+
     COMPONENT clk_generator
         PORT (
             reset : IN STD_LOGIC;
@@ -43,6 +45,28 @@ ARCHITECTURE rtl OF top IS
             locked : OUT STD_LOGIC;
             o_clk_vga : OUT STD_LOGIC;
             o_xclk_ov7670 : OUT STD_LOGIC
+        );
+    END COMPONENT;
+
+    COMPONENT vga_clk_gen IS
+        PORT (
+            clk_in1 : IN STD_LOGIC;
+            reset : IN STD_LOGIC;
+            clk_out1 : OUT STD_LOGIC;
+            locked : OUT STD_LOGIC
+        );
+    END COMPONENT;
+    COMPONENT blk_mem_gen_1 IS
+        PORT (
+            clka : IN STD_LOGIC;
+            ena : IN STD_LOGIC;
+            wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            addra : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+            dina : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
+            clkb : IN STD_LOGIC;
+            enb : IN STD_LOGIC;
+            addrb : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
+            doutb : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
         );
     END COMPONENT;
 
@@ -61,6 +85,16 @@ ARCHITECTURE rtl OF top IS
     SIGNAL pixel_data_byte : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
 
     SIGNAL pclk_cnt : unsigned(11 DOWNTO 0) := (OTHERS => '0'); --number of rising pclk edges between rising edge href and falling edge href
+
+    SIGNAL ena : STD_LOGIC := '0';
+    SIGNAL wea : STD_LOGIC_VECTOR(0 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL addra : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL dina : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL enb : STD_LOGIC := '0';
+    SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+
+    SIGNAL frame_finished : STD_LOGIC := '0';
 BEGIN
 
     --?? metastability of external signals
@@ -126,9 +160,9 @@ BEGIN
             --data_i => unsigned(href_cnt(7 DOWNTO 0)),
             data_i => unsigned(pixel_data_byte),
             --sseg_cs_o => sseg_cs_o,
-            sseg_cs_o => open,
+            sseg_cs_o => OPEN,
             --sseg_o => sseg_o
-            sseg_o => open
+            sseg_o => OPEN
         );
 
     ov7670_configuration : ENTITY work.ov7670_configuration(Behavioral)
@@ -151,6 +185,19 @@ BEGIN
     --led <= std_logic_vector(pclk_cnt(11 DOWNTO 8));
     led(2 DOWNTO 0) <= href_cnt(10 DOWNTO 8);
 
+    frame_buffer : blk_mem_gen_1
+    PORT MAP(
+        clka => clk,
+        wea => wea,
+        ena => '1',
+        addra => addra,
+        dina => dina,
+        clkb => pxl_clk,
+        enb => '1',
+        addrb => addrb,
+        doutb => doutb
+    );
+
     ov7670_capture : ENTITY work.ov7670_capture(rtl) PORT MAP(
         clk => clk,
         rst => rst,
@@ -159,15 +206,22 @@ BEGIN
         ov7670_href => buf2_href,
         ov7670_pclk => buf2_pclk,
         ov7670_data => buf2_data,
-        frame_finished_o => led(3),
+        frame_finished_o => frame_finished,
         pixel_data => pixel_data,
         start => edge(3),
         start_href => edge(2),
         start_pclk => edge(1),
         vsync_cnt_o => sseg_byte,
         href_cnt_o => href_cnt,
-        pclk_cnt_o => pclk_cnt
+        pclk_cnt_o => pclk_cnt,
+
+        --frame_buffer signals
+        wea => wea,
+        dina => dina,
+        addra => addra
         );
+
+    led(3) <= frame_finished;
 
     EDGE_DETECT : ENTITY work.debounce(Behavioral) PORT MAP(
         clk => clk,
@@ -185,16 +239,43 @@ BEGIN
             o_done => uart_done_tx
         );
 
-    vga_testpattern : ENTITY work.vga_testpattern(rtl)
+    -- vga_testpattern : ENTITY work.vga_testpattern(rtl)
+    --     PORT MAP(
+    --         clk => clk,
+    --         rst => rst,
+    --         pxl_clk => pxl_clk,
+    --         VGA_HS_O => VGA_HS_O,
+    --         VGA_VS_O => VGA_VS_O,
+    --         VGA_R => VGA_R,
+    --         VGA_G => VGA_G,
+    --         VGA_B => VGA_B
+    --     );
+
+    vga_own : ENTITY work.vga_own(rtl)
         PORT MAP(
             clk => clk,
             rst => rst,
+            pxl_clk => pxl_clk,
             VGA_HS_O => VGA_HS_O,
             VGA_VS_O => VGA_VS_O,
             VGA_R => VGA_R,
             VGA_G => VGA_G,
-            VGA_B => VGA_B
+            VGA_B => VGA_B,
+
+            --frame_buffer signals 
+            addrb => addrb,
+            doutb => doutb
         );
+
+    clk_div_inst : vga_clk_gen
+    PORT MAP
+    (-- Clock in ports
+        clk_in1 => clk,
+        reset => '0',
+        locked => OPEN,
+        -- Clock out ports
+        clk_out1 => pxl_clk
+    );
 
     uart_rxd_out <= uart_serial;
 

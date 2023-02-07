@@ -6,6 +6,7 @@ ENTITY vga_testpattern IS
     PORT (
         clk : IN STD_LOGIC;
         rst : IN STD_LOGIC;
+        pxl_clk : IN STD_LOGIC;
         VGA_HS_O : OUT STD_LOGIC;
         VGA_VS_O : OUT STD_LOGIC;
         VGA_R : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -15,17 +16,6 @@ ENTITY vga_testpattern IS
 END vga_testpattern;
 
 ARCHITECTURE rtl OF vga_testpattern IS
-
-    COMPONENT vga_clk_gen IS
-        PORT (
-            clk_in1 : IN STD_LOGIC;
-            reset : IN STD_LOGIC;
-            clk_out1 : OUT STD_LOGIC;
-            locked : OUT STD_LOGIC
-        );
-    END COMPONENT;
-
-    SIGNAL pxl_clk : STD_LOGIC := '0';
     --***640x480@60Hz***--  Requires 25 MHz clock
     CONSTANT FRAME_WIDTH : NATURAL := 640;
     CONSTANT FRAME_HEIGHT : NATURAL := 480;
@@ -83,16 +73,6 @@ ARCHITECTURE rtl OF vga_testpattern IS
     SIGNAL pixel_in_box : STD_LOGIC;
 
 BEGIN
-
-    clk_div_inst : vga_clk_gen
-    PORT MAP
-    (-- Clock in ports
-        clk_in1 => clk,
-        reset => '0',
-        locked => OPEN,
-        -- Clock out ports
-        clk_out1 => pxl_clk
-    );
     ----------------------------------------------------
     -------         TEST PATTERN LOGIC           -------
     ----------------------------------------------------
@@ -180,7 +160,7 @@ BEGIN
         END IF;
     END PROCESS;
 
-    PROCESS (pxl_clk) --increment c_cntr_reg
+    PROCESS (pxl_clk) --increment v_cntr_reg
     BEGIN
         IF (rising_edge(pxl_clk)) THEN
             IF ((h_cntr_reg = (H_TOTAL_LINE - 1)) AND (v_cntr_reg = (V_MAX_LINE - 1))) THEN --wraps around when frame ends
@@ -195,9 +175,9 @@ BEGIN
     BEGIN
         IF (rising_edge(pxl_clk)) THEN
             IF (h_cntr_reg >= (H_FRONT_PORCH + FRAME_WIDTH - 1)) AND (h_cntr_reg < (H_FRONT_PORCH + FRAME_WIDTH + H_SYNC_PULSE_WIDTH - 1)) THEN
-                h_sync_reg <= H_POL;
+                h_sync_reg <= H_POL; -- '0' if h_cntr_reg is greater or equal to 656 and lower than 752
             ELSE
-                h_sync_reg <= NOT(H_POL);
+                h_sync_reg <= NOT(H_POL); --'1'
             END IF;
         END IF;
     END PROCESS;
@@ -206,13 +186,13 @@ BEGIN
     BEGIN
         IF (rising_edge(pxl_clk)) THEN
             IF (v_cntr_reg >= (V_FRONT_PORCH + FRAME_HEIGHT - 1)) AND (v_cntr_reg < (V_FRONT_PORCH + FRAME_HEIGHT + V_SYNC_PULSE_WIDTH - 1)) THEN
-                v_sync_reg <= V_POL;
+                v_sync_reg <= V_POL; --'0' if v_cntr_reg >= 490 and less than 492
             ELSE
-                v_sync_reg <= NOT(V_POL);
+                v_sync_reg <= NOT(V_POL); --'1'
             END IF;
         END IF;
     END PROCESS;
-    
+
     active <= '1' WHEN ((h_cntr_reg < FRAME_WIDTH) AND (v_cntr_reg < FRAME_HEIGHT))ELSE
         '0';
 

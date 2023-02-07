@@ -18,7 +18,12 @@ ENTITY ov7670_capture IS
         pixel_data : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
         vsync_cnt_o : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
         href_cnt_o : OUT STD_LOGIC_VECTOR(11 DOWNTO 0);
-        pclk_cnt_o : OUT unsigned(11 DOWNTO 0)
+        pclk_cnt_o : OUT unsigned(11 DOWNTO 0);
+
+        --frame_buffer signals
+        wea : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+        dina : OUT STD_LOGIC_VECTOR(11 DOWNTO 0);
+        addra : OUT STD_LOGIC_VECTOR(18 DOWNTO 0)
     );
 END ov7670_capture;
 
@@ -44,24 +49,6 @@ ARCHITECTURE rtl OF ov7670_capture IS
     SIGNAL href_rising_edge, href_falling_edge : STD_LOGIC := '0';
     SIGNAL pclk_edge : STD_LOGIC := '0';
 
-    COMPONENT blk_mem_gen_1 IS
-        PORT (
-            clka : IN STD_LOGIC;
-            ena : IN STD_LOGIC;
-            wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            addra : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
-            dina : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
-            clkb : IN STD_LOGIC;
-            enb : IN STD_LOGIC;
-            addrb : IN STD_LOGIC_VECTOR(18 DOWNTO 0);
-            doutb : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
-        );
-    END COMPONENT;
-
-    SIGNAL ena : STD_LOGIC := '0';
-    SIGNAL wea : STD_LOGIC_VECTOR(0 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL addra : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL dina : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
     SIGNAL enb : STD_LOGIC := '0';
     SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
     SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
@@ -69,22 +56,6 @@ ARCHITECTURE rtl OF ov7670_capture IS
     SIGNAL bram_address_reg, bram_address_next : unsigned(18 DOWNTO 0) := (OTHERS => '0');
 
 BEGIN
-
-    bram : blk_mem_gen_1
-    PORT MAP(
-        clka => clk,
-        wea => wea,
-        ena => ena,
-        addra => addra,
-        dina => dina,
-        clkb => clk,
-        enb => enb,
-        addrb => addrb,
-        doutb => doutb
-    );
-
-    ena <= '1';
-
     addra <= STD_LOGIC_VECTOR(bram_address_reg);
 
     vsync_next <= ov7670_vsync;
@@ -152,6 +123,7 @@ BEGIN
 
             WHEN idle =>
                 IF start = '1' AND config_finished = '1' THEN
+                    bram_address_next <= (OTHERS => '0');
                     state_next <= wait_for_new_frame;
                 END IF;
 
