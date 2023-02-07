@@ -49,9 +49,6 @@ ARCHITECTURE rtl OF ov7670_capture IS
     SIGNAL href_rising_edge, href_falling_edge : STD_LOGIC := '0';
     SIGNAL pclk_edge : STD_LOGIC := '0';
 
-    SIGNAL enb : STD_LOGIC := '0';
-    SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
 
     SIGNAL bram_address_reg, bram_address_next : unsigned(18 DOWNTO 0) := (OTHERS => '0');
 
