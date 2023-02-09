@@ -22,7 +22,17 @@ ARCHITECTURE sim OF vga_own_tb IS
     SIGNAL vga_blue : STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
     SIGNAL vga_green : STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
 
+    SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+
 BEGIN
+
+    doutb <= x"F00" WHEN addrb = "0000000000000000000" ELSE
+        x"0F0" WHEN addrb = "0000000000000000001" ELSE
+        x"00F" WHEN addrb = "0000000000000000010" ELSE
+        x"abc" WHEN addrb = "0000000000000000011" ELSE
+        x"ef7" WHEN addrb = "0000000000000000100" ELSE
+        (OTHERS => '0');
 
     clk <= NOT clk AFTER clk_period / 2;
 
@@ -35,8 +45,9 @@ BEGIN
             VGA_VS_O => vsync,
             VGA_R => vga_red,
             VGA_B => vga_blue,
-            VGA_G => vga_green
-
+            VGA_G => vga_green,
+            addrb => addrb,
+            doutb => doutb
         );
 
     SEQUENCER_PROC : PROCESS
@@ -46,8 +57,11 @@ BEGIN
         rst <= '0';
 
         WAIT FOR clk_period * 10;
+        WAIT ON vsync UNTIL falling_edge(vsync);
 
+        WAIT ON vsync UNTIL rising_edge(vsync);
 
+        WAIT FOR clk_period * 100;
 
     END PROCESS;
 
