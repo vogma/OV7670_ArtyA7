@@ -12,9 +12,13 @@ ARCHITECTURE sim OF ov7670_capture_tb IS
 
     CONSTANT clk_hz : INTEGER := 100e6;
     CONSTANT pclk_hz : INTEGER := 24e6;
+    CONSTANT vga_clk_hz : INTEGER := 25e6;
+
     CONSTANT clk_period : TIME := 1 sec / clk_hz;
     CONSTANT clk_period_pclk : TIME := 1 sec / pclk_hz;
-    SIGNAL clk, ov7670_pclk : STD_LOGIC := '1';
+    CONSTANT clk_period_vga_clk : TIME := 1 sec / vga_clk_hz;
+
+    SIGNAL clk, ov7670_pclk, vga_clk : STD_LOGIC := '1';
     SIGNAL rst : STD_LOGIC := '1';
 
     SIGNAL config_finished : STD_LOGIC := '0';
@@ -38,6 +42,14 @@ ARCHITECTURE sim OF ov7670_capture_tb IS
     SIGNAL pclk_cnt_reg, pclk_cnt_next : INTEGER RANGE 0 TO 640 * 2 := 0;
     SIGNAL href_reg, href_next : INTEGER RANGE 0 TO 480 := 0;
 
+
+    --vga signals
+    SIGNAL vga_hsync : STD_LOGIC := '0';
+    SIGNAL vga_vsync : STD_LOGIC := '0';
+    SIGNAL vga_red : STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL vga_blue : STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL vga_green : STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
+
     SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
     SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
 
@@ -58,6 +70,7 @@ ARCHITECTURE sim OF ov7670_capture_tb IS
 BEGIN
     clk <= NOT clk AFTER clk_period / 2;
     ov7670_pclk <= NOT ov7670_pclk AFTER clk_period_pclk / 2;
+    vga_clk <= NOT vga_clk AFTER clk_period_vga_clk / 2;
 
     PROCESS (ov7670_pclk)
     BEGIN
@@ -73,7 +86,7 @@ BEGIN
         ena => '1',
         addra => addra,
         dina => dina,
-        clkb => clk,
+        clkb => vga_clk,
         enb => '1',
         addrb => addrb,
         doutb => doutb
@@ -99,6 +112,20 @@ BEGIN
             addra => addra
         );
 
+    vga : ENTITY work.vga_own(rtl)
+        PORT MAP(
+            clk => clk,
+            rst => rst,
+            pxl_clk => vga_clk,
+            VGA_HS_O => vga_hsync,
+            VGA_VS_O => vga_vsync,
+            VGA_R => vga_red,
+            VGA_B => vga_blue,
+            VGA_G => vga_green,
+            addrb => addrb,
+            doutb => doutb
+        );
+
     SEQUENCER_PROC : PROCESS
     BEGIN
         WAIT FOR clk_period * 2;
@@ -113,13 +140,9 @@ BEGIN
         ov7670_href <= '1'; --start new line;
         WAIT FOR clk_period * 100;
 
-        addrb <= "0000000000000000001";
         WAIT FOR clk_period * 2;
-        addrb <= "0000000000000000010";
         WAIT FOR clk_period * 2;
-        addrb <= "0000000000000000011";
         WAIT FOR clk_period * 2;
-        addrb <= "0000000000000000100";
         WAIT FOR clk_period * 2;
 
         finish;
