@@ -25,6 +25,8 @@ ARCHITECTURE sim OF vga_own_tb IS
     SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
     SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
 
+    SIGNAL vga_start : STD_LOGIC := '0';
+
 BEGIN
 
     doutb <= x"F00" WHEN addrb = "0000000000000000000" ELSE
@@ -43,12 +45,15 @@ BEGIN
             pxl_clk => clk,
             VGA_HS_O => hsync,
             VGA_VS_O => vsync,
+            start => vga_start,
             VGA_R => vga_red,
             VGA_B => vga_blue,
             VGA_G => vga_green,
             addrb => addrb,
             doutb => doutb
         );
+
+    vga_start <= '1';
 
     SEQUENCER_PROC : PROCESS
     BEGIN

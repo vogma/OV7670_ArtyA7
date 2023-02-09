@@ -41,8 +41,6 @@ ARCHITECTURE sim OF ov7670_capture_tb IS
 
     SIGNAL pclk_cnt_reg, pclk_cnt_next : INTEGER RANGE 0 TO 640 * 2 := 0;
     SIGNAL href_reg, href_next : INTEGER RANGE 0 TO 480 := 0;
-
-
     --vga signals
     SIGNAL vga_hsync : STD_LOGIC := '0';
     SIGNAL vga_vsync : STD_LOGIC := '0';
@@ -52,6 +50,7 @@ ARCHITECTURE sim OF ov7670_capture_tb IS
 
     SIGNAL addrb : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
     SIGNAL doutb : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL vga_start : STD_LOGIC := '0';
 
     COMPONENT blk_mem_gen_1 IS
         PORT (
@@ -112,6 +111,7 @@ BEGIN
             addra => addra
         );
 
+
     vga : ENTITY work.vga_own(rtl)
         PORT MAP(
             clk => clk,
@@ -122,6 +122,7 @@ BEGIN
             VGA_R => vga_red,
             VGA_B => vga_blue,
             VGA_G => vga_green,
+            start => vga_start,
             addrb => addrb,
             doutb => doutb
         );
@@ -131,21 +132,30 @@ BEGIN
         WAIT FOR clk_period * 2;
 
         rst <= '0';
-
+        vga_start <= '0';
         start <= '1';
         WAIT FOR clk_period * 10;
         ov7670_vsync <= '0'; --start new frame
 
         WAIT FOR clk_period * 10;
-        ov7670_href <= '1'; --start new line;
+        FOR i IN 1 TO 480 LOOP --count lines
+            ov7670_href <= '1'; --start new line;
+
+            FOR ii IN 1 TO 640 * 2 LOOP --send on line
+                WAIT ON ov7670_pclk UNTIL rising_edge(ov7670_pclk);
+            END LOOP;
+
+            ov7670_href <= '0'; --end of line;
+            WAIT FOR clk_period * 10;
+        END LOOP;
+        ov7670_vsync <= '1'; --end of frame
         WAIT FOR clk_period * 100;
+        vga_start <= '1';
 
-        WAIT FOR clk_period * 2;
-        WAIT FOR clk_period * 2;
-        WAIT FOR clk_period * 2;
-        WAIT FOR clk_period * 2;
+        wait on ov7670_vsync until ov7670_vsync = '0';
 
-        finish;
+
+        --finish;
     END PROCESS;
 
 END ARCHITECTURE;

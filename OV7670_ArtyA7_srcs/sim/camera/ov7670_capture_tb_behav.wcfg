@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="ov7670_capture_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="ov7670_capture_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="6712500000fs"></ZoomStartTime>
+      <ZoomEndTime time="28312500001fs"></ZoomEndTime>
+      <Cursor1Time time="25640814758fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="198"></NameColumnWidth>
+      <ValueColumnWidth column_width="89"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="37" />
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/ov7670_pclk">
+      <obj_property name="ElementShortName">ov7670_pclk</obj_property>
+      <obj_property name="ObjectShortName">ov7670_pclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_clk">
+      <obj_property name="ElementShortName">vga_clk</obj_property>
+      <obj_property name="ObjectShortName">vga_clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/rst">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/config_finished">
+      <obj_property name="ElementShortName">config_finished</obj_property>
+      <obj_property name="ObjectShortName">config_finished</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/ov7670_vsync">
+      <obj_property name="ElementShortName">ov7670_vsync</obj_property>
+      <obj_property name="ObjectShortName">ov7670_vsync</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/ov7670_href">
+      <obj_property name="ElementShortName">ov7670_href</obj_property>
+      <obj_property name="ObjectShortName">ov7670_href</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/DUT/state_reg">
+      <obj_property name="ElementShortName">state_reg</obj_property>
+      <obj_property name="ObjectShortName">state_reg</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/DUT/pixel_reg">
+      <obj_property name="ElementShortName">pixel_reg</obj_property>
+      <obj_property name="ObjectShortName">pixel_reg</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/DUT/href_cnt_reg">
+      <obj_property name="ElementShortName">href_cnt_reg</obj_property>
+      <obj_property name="ObjectShortName">href_cnt_reg</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/ov7670_data">
+      <obj_property name="ElementShortName">ov7670_data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">ov7670_data[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/start">
+      <obj_property name="ElementShortName">start</obj_property>
+      <obj_property name="ObjectShortName">start</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/start_href">
+      <obj_property name="ElementShortName">start_href</obj_property>
+      <obj_property name="ObjectShortName">start_href</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/start_pclk">
+      <obj_property name="ElementShortName">start_pclk</obj_property>
+      <obj_property name="ObjectShortName">start_pclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/frame_finished_o">
+      <obj_property name="ElementShortName">frame_finished_o</obj_property>
+      <obj_property name="ObjectShortName">frame_finished_o</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/pixel_data">
+      <obj_property name="ElementShortName">pixel_data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">pixel_data[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vsync_cnt_o">
+      <obj_property name="ElementShortName">vsync_cnt_o[7:0]</obj_property>
+      <obj_property name="ObjectShortName">vsync_cnt_o[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/href_cnt_o">
+      <obj_property name="ElementShortName">href_cnt_o[11:0]</obj_property>
+      <obj_property name="ObjectShortName">href_cnt_o[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/pclk_cnt_o">
+      <obj_property name="ElementShortName">pclk_cnt_o[11:0]</obj_property>
+      <obj_property name="ObjectShortName">pclk_cnt_o[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/wea">
+      <obj_property name="ElementShortName">wea[0:0]</obj_property>
+      <obj_property name="ObjectShortName">wea[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/dina">
+      <obj_property name="ElementShortName">dina[11:0]</obj_property>
+      <obj_property name="ObjectShortName">dina[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/addra">
+      <obj_property name="ElementShortName">addra[18:0]</obj_property>
+      <obj_property name="ObjectShortName">addra[18:0]</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/pclk_cnt_reg">
+      <obj_property name="ElementShortName">pclk_cnt_reg</obj_property>
+      <obj_property name="ObjectShortName">pclk_cnt_reg</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/pclk_cnt_next">
+      <obj_property name="ElementShortName">pclk_cnt_next</obj_property>
+      <obj_property name="ObjectShortName">pclk_cnt_next</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/href_reg">
+      <obj_property name="ElementShortName">href_reg</obj_property>
+      <obj_property name="ObjectShortName">href_reg</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/href_next">
+      <obj_property name="ElementShortName">href_next</obj_property>
+      <obj_property name="ObjectShortName">href_next</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_hsync">
+      <obj_property name="ElementShortName">vga_hsync</obj_property>
+      <obj_property name="ObjectShortName">vga_hsync</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_vsync">
+      <obj_property name="ElementShortName">vga_vsync</obj_property>
+      <obj_property name="ObjectShortName">vga_vsync</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vga_red">
+      <obj_property name="ElementShortName">vga_red[3:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_red[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vga_blue">
+      <obj_property name="ElementShortName">vga_blue[3:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_blue[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vga_green">
+      <obj_property name="ElementShortName">vga_green[3:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_green[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/addrb">
+      <obj_property name="ElementShortName">addrb[18:0]</obj_property>
+      <obj_property name="ObjectShortName">addrb[18:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/doutb">
+      <obj_property name="ElementShortName">doutb[11:0]</obj_property>
+      <obj_property name="ObjectShortName">doutb[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/vga/vsync_reg">
+      <obj_property name="ElementShortName">vsync_reg</obj_property>
+      <obj_property name="ObjectShortName">vsync_reg</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/ov7670_capture_tb/vga/hsync_reg">
+      <obj_property name="ElementShortName">hsync_reg</obj_property>
+      <obj_property name="ObjectShortName">hsync_reg</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vga/bram_address_reg">
+      <obj_property name="ElementShortName">bram_address_reg[18:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_address_reg[18:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_start">
+      <obj_property name="ElementShortName">vga_start</obj_property>
+      <obj_property name="ObjectShortName">vga_start</obj_property>
+   </wvobject>
+</wave_config>
