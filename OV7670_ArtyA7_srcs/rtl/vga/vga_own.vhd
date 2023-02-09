@@ -13,6 +13,8 @@ ENTITY vga_own IS
         VGA_B : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
         VGA_G : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 
+        start : IN STD_LOGIC;
+
         --frame_buffer signals
         addrb : OUT STD_LOGIC_VECTOR(18 DOWNTO 0);
         doutb : IN STD_LOGIC_VECTOR(11 DOWNTO 0) --pixel data
@@ -67,7 +69,7 @@ ARCHITECTURE rtl OF vga_own IS
 BEGIN
     addrb <= STD_LOGIC_VECTOR(bram_address_reg);
 
-    hsync_next <= 0 WHEN line_finished = '1' ELSE
+    hsync_next <= 0 WHEN line_finished = '1' AND start = '1' ELSE
         hsync_reg + 1;
 
     line_finished <= '1' WHEN hsync_reg = H_TOTAL_LINE - 1 ELSE
@@ -106,12 +108,12 @@ BEGIN
 
     --     "0000";
 
-    vsync_next <= 0 WHEN frame_finished = '1' ELSE
-        vsync_reg + 1 WHEN line_finished = '1' ELSE
+    vsync_next <= 0 WHEN frame_finished = '1' AND start = '1' ELSE
+        vsync_reg + 1 WHEN line_finished = '1' AND start = '1' ELSE
         vsync_reg;
 
-    bram_address_next <= (OTHERS => '0') WHEN frame_finished = '1' ELSE
-        bram_address_reg + 1 WHEN hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE
+    bram_address_next <= (OTHERS => '0') WHEN frame_finished = '1' AND start = '1' ELSE
+        bram_address_reg + 1 WHEN hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT AND start = '1'ELSE
         bram_address_reg;
 
     PROCESS (pxl_clk)
