@@ -127,7 +127,7 @@ BEGIN
             WHEN wait_for_new_frame =>
                 IF vsync_falling_edge = '1' THEN --new frame is about to start
                     href_cnt_next <= 0;
-                    state_next <= capture_line;
+                    state_next <= start_capturing;
                 END IF;
 
             WHEN start_capturing =>
