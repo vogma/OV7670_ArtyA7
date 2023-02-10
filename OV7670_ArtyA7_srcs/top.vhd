@@ -43,7 +43,6 @@ ARCHITECTURE rtl OF top IS
             reset : IN STD_LOGIC;
             clk_in1 : IN STD_LOGIC;
             locked : OUT STD_LOGIC;
-            o_clk_vga : OUT STD_LOGIC;
             o_xclk_ov7670 : OUT STD_LOGIC
         );
     END COMPONENT;
@@ -144,7 +143,6 @@ BEGIN
     clock_mccm : clk_generator
     PORT MAP(
         clk_in1 => clk,
-        o_clk_vga => vga_640x480_clk,
         o_xclk_ov7670 => xclk_ov7670,
         reset => '0',
         locked => OPEN

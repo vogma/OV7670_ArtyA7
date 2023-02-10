@@ -93,7 +93,8 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         --RGB444 
         x"8C_02",
 
-
+        --x"6b4a", --PLL control input clock x4
+        -- x"3E12", --PCLK divider by 4
 
         x"12_04", -- COM7,     set RGB color output
         x"11_80", -- CLKRC     internal PLL matches input clock
