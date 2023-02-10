@@ -177,10 +177,13 @@ BEGIN
 
             WHEN frame_finished =>
                 frame_finished_o <= '1';
-                IF start = '1' THEN
-                    rgb_next <= (OTHERS => '0');
-                    state_next <= idle;
-                END IF;
+                rgb_next <= (OTHERS => '0');
+                bram_address_next <= (OTHERS => '0');
+                state_next <= wait_for_new_frame;
+                -- IF start = '1' THEN
+                --     rgb_next <= (OTHERS => '0');
+                --     state_next <= idle;
+                -- END IF;
 
                 -- WHEN idle =>
                 --     IF start = '1' AND config_finished = '1' THEN
