@@ -70,7 +70,8 @@ BEGIN
     addrb <= STD_LOGIC_VECTOR(bram_address_reg);
 
     hsync_next <= 0 WHEN line_finished = '1' AND start = '1' ELSE
-        hsync_reg + 1;
+        hsync_reg + 1 WHEN start = '1' ELSE
+        hsync_reg;
 
     line_finished <= '1' WHEN hsync_reg = H_TOTAL_LINE - 1 ELSE
         '0';

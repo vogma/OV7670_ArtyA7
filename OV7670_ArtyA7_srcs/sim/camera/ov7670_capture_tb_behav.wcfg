@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="6712500000fs"></ZoomStartTime>
-      <ZoomEndTime time="28312500001fs"></ZoomEndTime>
-      <Cursor1Time time="25640814758fs"></Cursor1Time>
+      <ZoomStartTime time="40993967600fs"></ZoomStartTime>
+      <ZoomEndTime time="40994510101fs"></ZoomEndTime>
+      <Cursor1Time time="40994480100fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="198"></NameColumnWidth>
-      <ValueColumnWidth column_width="89"></ValueColumnWidth>
+      <ValueColumnWidth column_width="84"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="37" />
+   <WVObjectSize size="36" />
    <wvobject type="logic" fp_name="/ov7670_capture_tb/clk">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
@@ -27,10 +27,6 @@
    <wvobject type="logic" fp_name="/ov7670_capture_tb/ov7670_pclk">
       <obj_property name="ElementShortName">ov7670_pclk</obj_property>
       <obj_property name="ObjectShortName">ov7670_pclk</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_clk">
-      <obj_property name="ElementShortName">vga_clk</obj_property>
-      <obj_property name="ObjectShortName">vga_clk</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/ov7670_capture_tb/rst">
       <obj_property name="ElementShortName">rst</obj_property>
@@ -136,13 +132,17 @@
       <obj_property name="ElementShortName">vga_red[3:0]</obj_property>
       <obj_property name="ObjectShortName">vga_red[3:0]</obj_property>
    </wvobject>
+   <wvobject type="array" fp_name="/ov7670_capture_tb/vga_green">
+      <obj_property name="ElementShortName">vga_green[3:0]</obj_property>
+      <obj_property name="ObjectShortName">vga_green[3:0]</obj_property>
+   </wvobject>
    <wvobject type="array" fp_name="/ov7670_capture_tb/vga_blue">
       <obj_property name="ElementShortName">vga_blue[3:0]</obj_property>
       <obj_property name="ObjectShortName">vga_blue[3:0]</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/ov7670_capture_tb/vga_green">
-      <obj_property name="ElementShortName">vga_green[3:0]</obj_property>
-      <obj_property name="ObjectShortName">vga_green[3:0]</obj_property>
+   <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_clk">
+      <obj_property name="ElementShortName">vga_clk</obj_property>
+      <obj_property name="ObjectShortName">vga_clk</obj_property>
    </wvobject>
    <wvobject type="array" fp_name="/ov7670_capture_tb/addrb">
       <obj_property name="ElementShortName">addrb[18:0]</obj_property>
@@ -159,10 +159,6 @@
    <wvobject type="other" fp_name="/ov7670_capture_tb/vga/hsync_reg">
       <obj_property name="ElementShortName">hsync_reg</obj_property>
       <obj_property name="ObjectShortName">hsync_reg</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/ov7670_capture_tb/vga/bram_address_reg">
-      <obj_property name="ElementShortName">bram_address_reg[18:0]</obj_property>
-      <obj_property name="ObjectShortName">bram_address_reg[18:0]</obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/ov7670_capture_tb/vga_start">
       <obj_property name="ElementShortName">vga_start</obj_property>
