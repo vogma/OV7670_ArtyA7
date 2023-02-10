@@ -167,9 +167,9 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         x"a9_90", --HAECC6
         x"aa_94", --HAECC7
         x"13_e5", --COM8, enable AGC / AEC
-        --x"1E_23", --Mirror Image
-        x"69_06", --gain of RGB(manually adjusted)
-        x"71_B5" --test pattern
+        x"1E_23", --Mirror Image
+        x"69_06" --gain of RGB(manually adjusted)
+       -- x"71_B5" --test pattern
     );
 
     --Signals

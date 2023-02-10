@@ -248,7 +248,9 @@ BEGIN
     --         VGA_VS_O => VGA_VS_O,
     --         VGA_R => VGA_R,
     --         VGA_G => VGA_G,
-    --         VGA_B => VGA_B
+    --         VGA_B => VGA_B,
+    --         addrb => addrb,
+    --         doutb => doutb
     --     );
 
     vga_own : ENTITY work.vga_own(rtl)
