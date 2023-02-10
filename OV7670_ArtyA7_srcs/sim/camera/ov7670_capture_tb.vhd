@@ -110,8 +110,6 @@ BEGIN
             dina => dina,
             addra => addra
         );
-
-
     vga : ENTITY work.vga_own(rtl)
         PORT MAP(
             clk => clk,
@@ -135,6 +133,8 @@ BEGIN
         vga_start <= '0';
         start <= '1';
         WAIT FOR clk_period * 10;
+        start <= '0';
+
         ov7670_vsync <= '0'; --start new frame
 
         WAIT FOR clk_period * 10;
@@ -152,9 +152,7 @@ BEGIN
         WAIT FOR clk_period * 100;
         vga_start <= '1';
 
-        wait on ov7670_vsync until ov7670_vsync = '0';
-
-
+        WAIT ON ov7670_vsync UNTIL ov7670_vsync = '0';
         --finish;
     END PROCESS;
 

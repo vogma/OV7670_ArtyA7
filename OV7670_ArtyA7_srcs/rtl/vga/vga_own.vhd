@@ -85,9 +85,16 @@ BEGIN
     frame_finished <= '1' WHEN vsync_reg = V_MAX_LINE - 1 ELSE
         '0';
 
-    vga_r <= doutb(11 DOWNTO 8);
-    vga_g <= doutb(7 DOWNTO 4);
-    vga_b <= doutb(3 DOWNTO 0);
+    vga_r <= doutb(11 DOWNTO 8) WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE --left upper corner
+        "0000";
+    vga_g <= doutb(7 DOWNTO 4) WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE --left upper corner
+        "0000";
+    vga_b <= doutb(3 DOWNTO 0) WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE --left upper corner
+        "0000";
+
+    -- vga_r <= (OTHERS => '1');-- doutb(11 DOWNTO 8);
+    -- vga_g <= (OTHERS => '0');-- doutb(7 DOWNTO 4);
+    -- vga_b <= (OTHERS => '0');--doutb(3 DOWNTO 0);
 
     -- VGA_R <= "1111" WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < 10 AND vsync_reg < 10 ELSE --left upper corner
     --     "1111" WHEN hsync_reg >= FRAME_WIDTH - 10 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < 10 ELSE --right upper corner 
@@ -106,7 +113,15 @@ BEGIN
     --     "1111" WHEN hsync_reg >= FRAME_WIDTH - 10 AND vsync_reg >= 0 AND hsync_reg < 640 AND vsync_reg < 10 ELSE
     --     "1111" WHEN hsync_reg >= 0 AND vsync_reg >= FRAME_HEIGHT - 10 AND hsync_reg < 10 AND vsync_reg < FRAME_HEIGHT ELSE --left lower corner 
     --     "1111" WHEN hsync_reg >= FRAME_WIDTH - 10 AND vsync_reg >= FRAME_HEIGHT - 10 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE --right upper corner 
+    --     "0000";
 
+    -- VGA_R <= "1111" WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE --left upper corner
+    --     "0000";
+
+    -- VGA_B <= "1111" WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE
+    --     "0000";
+
+    -- VGA_G <= "1111" WHEN hsync_reg >= 0 AND vsync_reg >= 0 AND hsync_reg < FRAME_WIDTH AND vsync_reg < FRAME_HEIGHT ELSE
     --     "0000";
 
     vsync_next <= 0 WHEN frame_finished = '1' AND start = '1' ELSE

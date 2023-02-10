@@ -256,6 +256,7 @@ BEGIN
             clk => clk,
             rst => rst,
             pxl_clk => pxl_clk,
+            start => sw(1),
             VGA_HS_O => VGA_HS_O,
             VGA_VS_O => VGA_VS_O,
             VGA_R => VGA_R,
