@@ -11,7 +11,10 @@ ENTITY vga_testpattern IS
         VGA_VS_O : OUT STD_LOGIC;
         VGA_R : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
         VGA_B : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
-        VGA_G : OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
+        VGA_G : OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+        --frame_buffer signals
+        addrb : OUT STD_LOGIC_VECTOR(18 DOWNTO 0);
+        doutb : IN STD_LOGIC_VECTOR(11 DOWNTO 0) --pixel data
     );
 END vga_testpattern;
 
@@ -30,6 +33,8 @@ ARCHITECTURE rtl OF vga_testpattern IS
 
     CONSTANT H_POL : STD_LOGIC := '0';
     CONSTANT V_POL : STD_LOGIC := '0';
+
+    SIGNAL bram_address_reg, bram_address_next : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
 
     --Moving Box constants
     CONSTANT BOX_WIDTH : NATURAL := 8;
@@ -73,26 +78,49 @@ ARCHITECTURE rtl OF vga_testpattern IS
     SIGNAL pixel_in_box : STD_LOGIC;
 
 BEGIN
+
+    addrb <= bram_address_reg;
+
+    bram_address_next <= (OTHERS => '0') WHEN (h_cntr_reg = (H_TOTAL_LINE - 1)) AND (v_cntr_reg = (V_MAX_LINE - 1)) ELSE
+        bram_address_reg + 1 WHEN h_cntr_reg < FRAME_WIDTH AND v_cntr_reg < FRAME_HEIGHT ELSE
+        bram_address_reg;
+
+    PROCESS (pxl_clk)
+    BEGIN
+        IF rising_edge(pxl_clk) THEN
+            bram_address_reg <= bram_address_next;
+        END IF;
+    END PROCESS;
+
+    vga_red <= doutb(11 DOWNTO 8) WHEN active = '1' ELSE
+        (OTHERS => '0');
+
+    vga_blue <= doutb(3 DOWNTO 0) WHEN active = '1' ELSE
+        (OTHERS => '0');
+
+    vga_green <= doutb(7 DOWNTO 4) WHEN active = '1' ELSE
+        (OTHERS => '0');
+
     ----------------------------------------------------
     -------         TEST PATTERN LOGIC           -------
     ----------------------------------------------------
-    vga_red <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(8) = '1')) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
-        (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
-        (OTHERS => '0');
+    -- vga_red <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(8) = '1')) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
+    --     (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
+    --     (OTHERS => '0');
 
-    vga_blue <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(6) = '1')) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
-        (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
-        (OTHERS => '0');
+    -- vga_blue <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(6) = '1')) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
+    --     (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
+    --     (OTHERS => '0');
 
-    vga_green <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(7) = '1')) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
-        (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
-        (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
-        (OTHERS => '0');
+    -- vga_green <= h_cntr_reg(5 DOWNTO 2) WHEN (active = '1' AND ((h_cntr_reg < 512 AND v_cntr_reg < 256) AND h_cntr_reg(7) = '1')) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((h_cntr_reg < 512 AND NOT(v_cntr_reg < 256)) AND NOT(pixel_in_box = '1'))) ELSE
+    --     (OTHERS => '1') WHEN (active = '1' AND ((NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '1' AND h_cntr_reg(3) = '1')) OR
+    --     (NOT(h_cntr_reg < 512) AND (v_cntr_reg(8) = '0' AND v_cntr_reg(3) = '1')))) ELSE
+    --     (OTHERS => '0');
     ------------------------------------------------------
     -------         MOVING BOX LOGIC                ------
     ------------------------------------------------------
