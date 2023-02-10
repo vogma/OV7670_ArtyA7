@@ -49,7 +49,7 @@ ARCHITECTURE rtl OF ov7670_capture IS
     SIGNAL href_rising_edge, href_falling_edge : STD_LOGIC := '0';
     SIGNAL pclk_edge : STD_LOGIC := '0';
 
-
+    SIGNAL frame_finished_reg, frame_finished_next : STD_LOGIC := '0';
     SIGNAL bram_address_reg, bram_address_next : unsigned(18 DOWNTO 0) := (OTHERS => '0');
 
 BEGIN
@@ -75,7 +75,7 @@ BEGIN
     sync : PROCESS (clk, rst)
     BEGIN
         IF rising_edge(clk) THEN
-            IF rst = '1' THEN
+            IF rst = '1' THEN --TODO tie reset to pll lock? 
                 state_reg <= idle;
                 vsync_cnt_reg <= 0;
                 vsync_reg <= '0';
@@ -170,10 +170,10 @@ BEGIN
                 END IF;
 
             WHEN write_to_bram =>
-                wea <= "1";
-                dina <= rgb_reg(11 DOWNTO 0);
-                bram_address_next <= bram_address_reg + 1;
-                state_next <= capture_line;
+                wea <= "1"; --write enable bram
+                dina <= rgb_reg(11 DOWNTO 0); --write 12 bit pixel value to bram
+                bram_address_next <= bram_address_reg + 1; --increment address register for next pixel
+                state_next <= capture_line; --capture next pixel
 
             WHEN frame_finished =>
                 frame_finished_o <= '1';
