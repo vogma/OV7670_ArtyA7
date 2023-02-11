@@ -170,7 +170,7 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         x"13_e5", --COM8, enable AGC / AEC
         x"1E_23", --Mirror Image
         x"69_06" --gain of RGB(manually adjusted)
-       -- x"71_B5" --test pattern
+        -- x"71_B5" --test pattern
     );
 
     --Signals
@@ -226,25 +226,6 @@ BEGIN
             END IF;
         END IF;
     END PROCESS;
-
-    busy_cnt_next <= 0 WHEN reset_busy_cnt = '1' ELSE
-        busy_cnt_reg + 1 WHEN i2c_busy_edge = '1' ELSE
-        busy_cnt_reg;
-    busy_next <= i2c_busy; --captures the current value of the busy signal in the busy_reg register
-    i2c_busy_edge <= '1' WHEN (busy_reg = '0' AND i2c_busy = '1') ELSE
-        '0'; --detects the rising_edge of the busy signal from the i2c_master
-    i2c_addr <= OV7670_ADDR;
-
-    reg_value <= read_reg;
-
-    register_config <= register_config_rom(rom_index);
-
-    i2c_ena <= i2c_ena_reg;
-    done <= done_reg;
-
-    config_finished <= config_finished_reg;
-
-    ov7670_reset <= ov7670_reset_sig;
 
     PROCESS (state_reg, start, busy_cnt_reg, done_reg, config_finished_reg, wait_600ms_reg, read_reg, register_config, rom_index, i2c_rdata, i2c_ena_reg, counter_reg, i2c_busy, busy_prev)
     BEGIN
@@ -393,4 +374,23 @@ BEGIN
                 state_next <= idle;
         END CASE;
     END PROCESS;
+
+    busy_cnt_next <= 0 WHEN reset_busy_cnt = '1' ELSE
+        busy_cnt_reg + 1 WHEN i2c_busy_edge = '1' ELSE
+        busy_cnt_reg;
+    busy_next <= i2c_busy; --captures the current value of the busy signal in the busy_reg register
+    i2c_busy_edge <= '1' WHEN (busy_reg = '0' AND i2c_busy = '1') ELSE
+        '0'; --detects the rising_edge of the busy signal from the i2c_master
+    i2c_addr <= OV7670_ADDR;
+
+    reg_value <= read_reg;
+
+    register_config <= register_config_rom(rom_index);
+
+    i2c_ena <= i2c_ena_reg;
+    done <= done_reg;
+
+    config_finished <= config_finished_reg;
+
+    ov7670_reset <= ov7670_reset_sig;
 END ARCHITECTURE;

@@ -70,7 +70,6 @@ ARCHITECTURE rtl OF top IS
     END COMPONENT;
 
     SIGNAL sseg_byte : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL href_cnt : STD_LOGIC_VECTOR(11 DOWNTO 0) := (OTHERS => '0');
     SIGNAL config_finished : STD_LOGIC := '0';
 
     SIGNAL buf1_vsync, buf2_vsync, buf1_href, buf2_href : STD_LOGIC := '0';
@@ -82,9 +81,6 @@ ARCHITECTURE rtl OF top IS
 
     SIGNAL pixel_data : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
     SIGNAL pixel_data_byte : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
-
-    SIGNAL pclk_cnt : unsigned(11 DOWNTO 0) := (OTHERS => '0'); --number of rising pclk edges between rising edge href and falling edge href
-
     SIGNAL ena : STD_LOGIC := '0';
     SIGNAL wea : STD_LOGIC_VECTOR(0 DOWNTO 0) := (OTHERS => '0');
     SIGNAL addra : STD_LOGIC_VECTOR(18 DOWNTO 0) := (OTHERS => '0');
@@ -181,7 +177,7 @@ BEGIN
     --led(0) <= config_finished;
     --led(3 DOWNTO 1) <= "000";
     --led <= std_logic_vector(pclk_cnt(11 DOWNTO 8));
-    led(2 DOWNTO 0) <= href_cnt(10 DOWNTO 8);
+    led(2 DOWNTO 0) <= (OTHERS => '0');
 
     frame_buffer : blk_mem_gen_1
     PORT MAP(
@@ -207,11 +203,6 @@ BEGIN
         frame_finished_o => frame_finished,
         pixel_data => pixel_data,
         start => edge(3),
-        start_href => edge(2),
-        start_pclk => edge(1),
-        vsync_cnt_o => sseg_byte,
-        href_cnt_o => href_cnt,
-        pclk_cnt_o => pclk_cnt,
 
         --frame_buffer signals
         wea => wea,
