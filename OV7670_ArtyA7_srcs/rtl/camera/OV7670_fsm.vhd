@@ -31,60 +31,6 @@ ARCHITECTURE rtl OF ov7670_fsm IS
     --53
     TYPE rom_type IS ARRAY (0 TO 77) OF STD_LOGIC_VECTOR(15 DOWNTO 0);
     SIGNAL register_config_rom : rom_type := (
-        -- x"1204",
-        -- x"1180",
-        -- x"0C00",
-        -- x"3E00",
-        -- x"8C00",
-        -- x"0400", --falsch 
-        -- x"4010",
-        -- x"3a04",
-        -- x"1438",
-        -- x"4fb3",
-        -- x"50b3",
-        -- x"5100",
-        -- x"523d",
-        -- x"53a7",
-        -- x"54e4",
-        -- x"589e",
-        -- x"3dc0",
-        -- x"1100",
-        -- x"1711", --fehlt beim lesen aber wird korrekt geschrieben
-        -- x"1861",
-        -- x"32A4",
-        -- x"1903",
-        -- x"1A7b",
-        -- x"030a",
-        -- x"0e61",
-        -- x"0f4b",
-        -- x"1602",
-        -- x"1e37",
-        -- x"2102",
-        -- x"2291",
-        -- x"2907",
-        -- x"330b",
-        -- x"350b",
-        -- x"371d",
-        -- x"3871",
-        -- x"392a",
-        -- x"3c78",
-        -- x"4d40",
-        -- x"4e20",
-        -- x"6900",
-        -- x"6b4a",
-        -- x"7410",
-        -- x"8d4f",
-        -- x"8e00",
-        -- x"8f00",
-        -- x"9000",
-        -- x"9100",
-        -- x"9600",
-        -- x"9a00",
-        -- x"b084",
-        -- x"b10c",
-        -- x"b20e",
-        -- x"b382",
-        -- x"b80a"
         --source https://github.com/AngeloJacobo/FPGA_OV7670_Camera_Interface/blob/main/src/camera_interface.v
         x"12_04", --set output format to RGB
         x"15_20", --pclk will not toggle during horizontal blank
@@ -95,9 +41,11 @@ ARCHITECTURE rtl OF ov7670_fsm IS
 
         --x"6b4a", --PLL control input clock x4
         -- x"3E12", --PCLK divider by 4
+        x"11_01",
+        x"6B_4A",
 
         x"12_04", -- COM7,     set RGB color output
-        x"11_80", -- CLKRC     internal PLL matches input clock
+        --x"11_80", -- CLKRC     internal PLL matches input clock
         x"0C_00", -- COM3,     default settings
         x"3E_00", -- COM14,    no scaling, normal pclock
         x"04_00", -- COM1,     disable CCIR656
@@ -168,7 +116,7 @@ ARCHITECTURE rtl OF ov7670_fsm IS
         x"a9_90", --HAECC6
         x"aa_94", --HAECC7
         x"13_e5", --COM8, enable AGC / AEC
-        x"1E_23", --Mirror Image
+        --x"1E_23", --Mirror Image
         x"69_06" --gain of RGB(manually adjusted)
         -- x"71_B5" --test pattern
     );
@@ -181,216 +129,210 @@ ARCHITECTURE rtl OF ov7670_fsm IS
     SIGNAL ov7670_reset_sig : STD_LOGIC := '1';
     SIGNAL busy_prev : STD_LOGIC := '0';
     SIGNAL register_config : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
+    SIGNAL i2c_busy_edge : STD_LOGIC := '0';
 
-    --Registers
-    SIGNAL state_reg, state_next : state_type := powerup;
-    SIGNAL busy_reg, busy_next, i2c_busy_edge : STD_LOGIC := '0'; -- indicates transaction in progress
-    SIGNAL led_reg, led_next : STD_LOGIC_VECTOR(3 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL counter_reg, counter_next : INTEGER RANGE 0 TO 100000 := 0;
-    SIGNAL wait_600ms_reg, wait_600ms_next : INTEGER RANGE 0 TO 60_000_000 := 0;
-    SIGNAL i2c_ena_reg, i2c_ena_next : STD_LOGIC := '0';
-    SIGNAL read_reg, read_next : STD_LOGIC_VECTOR(7 DOWNTO 0) := (OTHERS => '0');
-    SIGNAL done_reg, done_next : STD_LOGIC := '0';
-    SIGNAL busy_cnt_reg, busy_cnt_next : INTEGER RANGE 0 TO 3 := 0;
-    SIGNAL config_finished_reg, config_finished_next : STD_LOGIC := '0';
-    SIGNAL rom_index, rom_index_next : INTEGER RANGE 0 TO register_config_rom'length := 0;
+    CONSTANT CLK_CNT_600MS : INTEGER := 60_000_000;
+    CONSTANT CLK_CNT_1MS : INTEGER := 100_000;
+    CONSTANT CLK_CNT_1US : INTEGER := 260;
+
+    TYPE reg_type IS RECORD
+        state : state_type;
+        counter : INTEGER RANGE 0 TO CLK_CNT_600MS;
+        i2c_ena : STD_LOGIC;
+        read : STD_LOGIC_VECTOR(7 DOWNTO 0);
+        done : STD_LOGIC;
+        config_finished : STD_LOGIC;
+        rom_index : INTEGER RANGE 0 TO register_config_rom'length;
+    END RECORD reg_type;
+
+    TYPE i2c_reg_type IS RECORD
+        busy : STD_LOGIC;
+        busy_cnt : INTEGER RANGE 0 TO 3;
+    END RECORD i2c_reg_type;
+
+    CONSTANT INIT_REG_FILE : reg_type := (
+        state => powerup,
+        counter => 0,
+        i2c_ena => '0',
+        read => (OTHERS => '0'),
+        done => '0',
+        config_finished => '0',
+        rom_index => 0
+    );
+
+    CONSTANT INIT_I2C_REGS : i2c_reg_type := (
+        busy => '0',
+        busy_cnt => 0
+    );
+
+    SIGNAL reg, reg_next : reg_type := INIT_REG_FILE;
+    SIGNAL i2c_reg, i2c_next : i2c_reg_type := INIT_I2C_REGS;
 BEGIN
 
     PROCESS (clk, rst)
     BEGIN
         IF rising_edge(clk) THEN
             IF rst = '1' THEN
-                state_reg <= idle;
-                busy_reg <= '0';
-                done_reg <= '0';
-                rom_index <= 0;
-                read_reg <= (OTHERS => '0');
-                --led_reg <= (OTHERS => '0');
-                counter_reg <= 0;
-                wait_600ms_reg <= 0;
-                i2c_ena_reg <= '0';
-                config_finished_reg <= '0';
-                busy_cnt_reg <= 0;
+                reg <= INIT_REG_FILE;
+                i2c_reg <= INIT_I2C_REGS;
             ELSE
-                state_reg <= state_next;
-                read_reg <= read_next;
-                busy_reg <= busy_next;
-                --led_reg <= led_next;
-                rom_index <= rom_index_next;
-                counter_reg <= counter_next;
-                config_finished_reg <= config_finished_next;
-                i2c_ena_reg <= i2c_ena_next;
-                done_reg <= done_next;
-                wait_600ms_reg <= wait_600ms_next;
-                busy_cnt_reg <= busy_cnt_next;
+                reg <= reg_next;
+                i2c_reg <= i2c_next;
             END IF;
         END IF;
     END PROCESS;
 
-    PROCESS (state_reg, start, busy_cnt_reg, done_reg, config_finished_reg, wait_600ms_reg, read_reg, register_config, rom_index, i2c_rdata, i2c_ena_reg, counter_reg, i2c_busy, busy_prev)
+    PROCESS (reg, start, i2c_reg, register_config, i2c_rdata, i2c_busy, busy_prev)
     BEGIN
+        reg_next <= reg;
+
         i2c_rw <= '0';
         reset_busy_cnt <= '0';
-        done_next <= done_reg;
-        read_next <= read_reg;
         i2c_wdata <= (OTHERS => '0');
-        i2c_ena_next <= i2c_ena_reg;
-        state_next <= state_reg;
-        --led_next <= led_reg;
-        config_finished_next <= config_finished_reg;
-        rom_index_next <= rom_index;
-        --reg_value <= (OTHERS => '0');
-        counter_next <= counter_reg;
-        wait_600ms_next <= wait_600ms_reg;
         ov7670_reset_sig <= '1';
-
-        CASE state_reg IS
+        CASE reg.state IS
 
             WHEN powerup => --wait 600ms for device to powerup 
-                wait_600ms_next <= wait_600ms_reg + 1;
-                IF wait_600ms_reg = 59_999_999 THEN
+                reg_next.counter <= reg.counter + 1;
+                IF reg.counter = CLK_CNT_600MS - 1 THEN
+                    reg_next.counter <= 0;
                     reset_busy_cnt <= '1';
-                    state_next <= reset_device;
+                    reg_next.state <= reset_device;
                 END IF;
 
             WHEN idle =>
                 IF start = '1' THEN
-                    rom_index_next <= 0;
-                    --led_next <= (OTHERS => '0');
-                    config_finished_next <= '0';
-                    state_next <= reset_device;
+                    reg_next.rom_index <= 0;
+                    reg_next.config_finished <= '0';
+                    reg_next.state <= reset_device;
                 END IF;
 
             WHEN reset_device =>
 
-                wait_600ms_next <= wait_600ms_reg + 1;
-                IF wait_600ms_reg < 30_000_000 THEN
+                reg_next.counter <= reg.counter + 1;
+                IF reg.counter < CLK_CNT_600MS / 2 THEN
                     ov7670_reset_sig <= '0'; --active low reset
                 END IF;
 
-                IF wait_600ms_reg = 59_999_999 THEN
-                    state_next <= i2c_write_register; -- 600ms over
+                IF reg.counter = CLK_CNT_600MS THEN
+                    reg_next.counter <= 0; --reset counter
+                    reg_next.state <= i2c_write_register; -- 600ms over
                     reset_busy_cnt <= '1';
                 END IF;
 
             WHEN i2c_write_register =>
-                --led_next(1) <= '1';
-                CASE busy_cnt_reg IS
+                CASE i2c_reg.busy_cnt IS
                     WHEN 0 =>
-                        i2c_ena_next <= '1'; --start i2c transaction
+                        reg_next.i2c_ena <= '1'; --start i2c transaction
                         i2c_rw <= I2C_WRITE;
                         i2c_wdata <= register_config(15 DOWNTO 8);-- register address
-                        --i2c_wdata <= x"19"; --Register 4A
                     WHEN 1 =>
                         i2c_wdata <= register_config(7 DOWNTO 0);-- register value
-                        --i2c_wdata <= x"4D";
                     WHEN 2 =>
-                        i2c_ena_next <= '0';
+                        reg_next.i2c_ena <= '0';
                         IF i2c_busy = '0' THEN --i2c transaction completed 
                             reset_busy_cnt <= '1'; --reset busy_cnt register
-                            counter_next <= 0;
-                            state_next <= wait_between_tx;
+                            reg_next.state <= wait_between_tx;
                         END IF;
                     WHEN OTHERS => NULL;
                 END CASE;
 
             WHEN wait_between_tx => -- waits for 1ms between write and read
-                counter_next <= counter_reg + 1;
-                IF counter_reg = 99999 THEN
-                    counter_next <= 0;
-                    IF rom_index < register_config_rom'length THEN
-                        rom_index_next <= rom_index + 1;
-                        state_next <= i2c_write_register;
+                reg_next.counter <= reg.counter + 1;
+
+                IF reg.counter = CLK_CNT_1MS - 1 THEN
+                    reg_next.counter <= 0;
+                    IF reg.rom_index < register_config_rom'length THEN
+                        reg_next.rom_index <= reg.rom_index + 1;
+                        reg_next.state <= i2c_write_register;
                     ELSE
-                        rom_index_next <= 0;
-                        config_finished_next <= '1';
-                        state_next <= i2c_write_read_register_address;
+                        reg_next.rom_index <= 0;
+                        reg_next.config_finished <= '1';
+                        reg_next.state <= i2c_write_read_register_address;
                     END IF;
                 END IF;
 
             WHEN i2c_write_read_register_address =>
-                --led_next(2) <= '1';
-                CASE busy_cnt_reg IS
+                CASE i2c_reg.busy_cnt IS
                     WHEN 0 =>
-                        i2c_ena_next <= '1';
+                        reg_next.i2c_ena <= '1';
                         i2c_rw <= I2C_WRITE;
                         i2c_wdata <= register_config(15 DOWNTO 8);
                     WHEN 1 =>
-                        --i2c_wdata <= x"4C";
-                        i2c_ena_next <= '0';
+                        reg_next.i2c_ena <= '0';
                         IF i2c_busy = '0' THEN
-                            counter_next <= 0;
+                            reg_next.counter <= 0;
 
-                            state_next <= wait_1us;
+                            reg_next.state <= wait_1us;
                             reset_busy_cnt <= '1';
                         END IF;
                     WHEN OTHERS => NULL;
                 END CASE;
 
             WHEN wait_1us => --wait 1us between write register address and read register value
-                --led_next(3) <= '1';
-                counter_next <= counter_reg + 1;
-                IF counter_reg = 260 THEN
-                    counter_next <= 0;
-                    state_next <= i2c_read_reg;
+                reg_next.counter <= reg.counter + 1;
+                IF reg.counter = CLK_CNT_1US - 1 THEN
+                    reg_next.counter <= 0;
+                    reg_next.state <= i2c_read_reg;
                     reset_busy_cnt <= '1';
                 END IF;
 
             WHEN i2c_read_reg =>
-                CASE busy_cnt_reg IS
+                CASE i2c_reg.busy_cnt IS
                     WHEN 0 =>
-                        i2c_ena_next <= '1';
+                        reg_next.i2c_ena <= '1';
                         i2c_rw <= I2C_READ;
                     WHEN 1 =>
                         i2c_rw <= I2C_READ;
                         IF i2c_busy = '0' THEN
-                            done_next <= '1';
-                            read_next <= i2c_rdata;
-                            i2c_ena_next <= '0';
-                            state_next <= wait_1us_after_read;
+                            reg_next.done <= '1';
+                            reg_next.read <= i2c_rdata;
+                            reg_next.i2c_ena <= '0';
+                            reg_next.state <= wait_1us_after_read;
                             reset_busy_cnt <= '1';
                         END IF;
                     WHEN OTHERS => NULL;
                 END CASE;
 
             WHEN wait_1us_after_read => --wait 1us between write register address and read register value
-                done_next <= '0';
-                counter_next <= counter_reg + 1;
+                reg_next.done <= '0';
+                reg_next.counter <= reg.counter + 1;
 
-                IF counter_reg >= 100000 - 1 THEN
-                    counter_next <= counter_reg;
+                IF reg.counter >= CLK_CNT_1US - 1 THEN
+                    reg_next.counter <= reg.counter;
 
-                    IF rom_index < register_config_rom'length THEN
-                        rom_index_next <= rom_index + 1;
+                    IF reg.rom_index < register_config_rom'length THEN
+                        reg_next.rom_index <= reg.rom_index + 1;
                         reset_busy_cnt <= '1';
-                        counter_next <= 0;
-                        state_next <= i2c_write_read_register_address;
+                        reg_next.counter <= 0;
+                        reg_next.state <= i2c_write_read_register_address;
                     ELSE
-                        counter_next <= 0;
-                        state_next <= idle;
+                        reg_next.counter <= 0;
+                        reg_next.state <= idle;
                     END IF;
                 END IF;
             WHEN OTHERS =>
-                state_next <= idle;
+                reg_next.state <= idle;
         END CASE;
     END PROCESS;
 
-    busy_cnt_next <= 0 WHEN reset_busy_cnt = '1' ELSE
-        busy_cnt_reg + 1 WHEN i2c_busy_edge = '1' ELSE
-        busy_cnt_reg;
-    busy_next <= i2c_busy; --captures the current value of the busy signal in the busy_reg register
-    i2c_busy_edge <= '1' WHEN (busy_reg = '0' AND i2c_busy = '1') ELSE
+    i2c_next.busy_cnt <= 0 WHEN reset_busy_cnt = '1' ELSE
+    i2c_reg.busy_cnt + 1 WHEN i2c_busy_edge = '1' ELSE
+    i2c_reg.busy_cnt;
+
+    i2c_next.busy <= i2c_busy; --captures the current value of the busy signal in the busy register
+    i2c_busy_edge <= '1' WHEN (i2c_reg.busy = '0' AND i2c_busy = '1') ELSE
         '0'; --detects the rising_edge of the busy signal from the i2c_master
     i2c_addr <= OV7670_ADDR;
 
-    reg_value <= read_reg;
+    reg_value <= reg.read;
 
-    register_config <= register_config_rom(rom_index);
+    register_config <= register_config_rom(reg.rom_index);
 
-    i2c_ena <= i2c_ena_reg;
-    done <= done_reg;
+    i2c_ena <= reg.i2c_ena;
+    done <= reg.done;
 
-    config_finished <= config_finished_reg;
+    config_finished <= reg.config_finished;
 
     ov7670_reset <= ov7670_reset_sig;
 END ARCHITECTURE;
