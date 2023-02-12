@@ -28,26 +28,39 @@ ARCHITECTURE rtl OF ov7670_capture IS
 
     TYPE state_type IS (
         idle, start_capturing, wait_for_new_frame, frame_finished, capture_line, capture_rgb_byte, write_to_bram
-    );--idle, capture, wait_for_vsync, capture_href, wait_for_frame_start, wait_for_href, capture_pclk);
+    );
 
     --registers
-    SIGNAL state_reg, state_next : state_type := idle;
     SIGNAL vsync_reg, vsync_next : STD_LOGIC := '0';
     SIGNAL href_reg, href_next : STD_LOGIC := '0';
     SIGNAL pclk_reg, pclk_next : STD_LOGIC := '0';
-    SIGNAL href_cnt_reg, href_cnt_next : INTEGER RANGE 0 TO 500 := 0;
-    SIGNAL pixel_reg, pixel_next : INTEGER RANGE 0 TO 650 := 0; --keeps track of current pixel positon in line (max 640)
-    SIGNAL rgb_reg, rgb_next : STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0');
 
     SIGNAL vsync_falling_edge, vsync_rising_edge : STD_LOGIC := '0';
     SIGNAL href_rising_edge, href_falling_edge : STD_LOGIC := '0';
     SIGNAL pclk_edge : STD_LOGIC := '0';
 
     SIGNAL frame_finished_reg, frame_finished_next : STD_LOGIC := '0';
-    SIGNAL bram_address_reg, bram_address_next : unsigned(18 DOWNTO 0) := (OTHERS => '0');
+    
+    TYPE reg_type IS RECORD
+        state : state_type;
+        href_cnt : INTEGER RANGE 0 TO 500;
+        rgb_reg : STD_LOGIC_VECTOR(15 DOWNTO 0);
+        pixel_reg : INTEGER RANGE 0 TO 650;
+        bram_address : unsigned(18 DOWNTO 0);
+    END RECORD reg_type;
+
+    CONSTANT INIT_REG_FILE : reg_type := (
+        state => idle,
+        href_cnt => 0,
+        rgb_reg => (OTHERS => '0'),
+        pixel_reg => 0,
+        bram_address => (OTHERS => '0')
+    );
+
+    SIGNAL reg, reg_next : reg_type := INIT_REG_FILE;
 
 BEGIN
-    addra <= STD_LOGIC_VECTOR(bram_address_reg);
+    addra <= STD_LOGIC_VECTOR(reg.bram_address);
 
     vsync_next <= ov7670_vsync;
     vsync_falling_edge <= '1' WHEN vsync_reg = '1' AND ov7670_vsync = '0' ELSE
@@ -64,114 +77,96 @@ BEGIN
         '0';
 
     pclk_next <= ov7670_pclk;
-    pclk_edge <= '1' WHEN pclk_reg = '0' AND ov7670_pclk = '1' ELSE
+    pclk_edge <= '1' WHEN pclk_reg = '0' AND ov7670_pclk = '1' ELSE --TODO can external pclk be directly used as a clk? 
         '0';
 
     sync : PROCESS (clk, rst)
     BEGIN
         IF rising_edge(clk) THEN
             IF rst = '1' THEN --TODO tie reset to pll lock? 
-                state_reg <= idle;
+                reg <= INIT_REG_FILE;
                 vsync_reg <= '0';
                 pclk_reg <= '0';
-                bram_address_reg <= (OTHERS => '0');
                 href_reg <= '0';
-                href_cnt_reg <= 0;
-                rgb_reg <= (OTHERS => '0');
-                pixel_reg <= 0;
             ELSE
-
-                state_reg <= state_next;
+                reg <= reg_next;
                 vsync_reg <= vsync_next;
                 href_reg <= href_next;
-                rgb_reg <= rgb_next;
-                bram_address_reg <= bram_address_next;
                 pclk_reg <= pclk_next;
-                href_cnt_reg <= href_cnt_next;
-                pixel_reg <= pixel_next;
             END IF;
         END IF;
     END PROCESS;
 
-    comb : PROCESS (state_reg, bram_address_reg, ov7670_data, pixel_reg, rgb_reg, pclk_edge, href_cnt_reg, href_rising_edge, start, vsync_falling_edge, vsync_rising_edge, config_finished)
+    comb : PROCESS (reg, ov7670_data, pclk_edge, href_rising_edge, start, vsync_falling_edge, vsync_rising_edge, config_finished)
     BEGIN
-        state_next <= state_reg;
-        href_cnt_next <= href_cnt_reg;
-        rgb_next <= rgb_reg;
-        pixel_next <= pixel_reg;
-        bram_address_next <= bram_address_reg;
+        reg_next <= reg;
         frame_finished_o <= '0'; --debug
         wea <= "0";
         dina <= (OTHERS => '0');
-        CASE state_reg IS
+        CASE reg.state IS
 
             WHEN idle =>
                 IF start = '1' AND config_finished = '1' THEN
-                    bram_address_next <= (OTHERS => '0');
-                    state_next <= wait_for_new_frame;
+                    reg_next.bram_address <= (OTHERS => '0');
+                    reg_next.state <= wait_for_new_frame;
                 END IF;
 
             WHEN wait_for_new_frame =>
                 IF vsync_falling_edge = '1' THEN --new frame is about to start
-                    href_cnt_next <= 0;
-                    state_next <= start_capturing;
+                    reg_next.href_cnt <= 0;
+                    reg_next.state <= start_capturing;
                 END IF;
 
             WHEN start_capturing =>
                 IF href_rising_edge = '1' THEN
-                    pixel_next <= 0; -- new line: start with pixel position 0
-                    state_next <= capture_line;
+                    reg_next.pixel_reg <= 0; -- new line: start with pixel position 0
+                    reg_next.state <= capture_line;
                 END IF;
 
             WHEN capture_line =>
                 IF pclk_edge = '1' THEN
 
-                    --IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
-                    rgb_next(15 DOWNTO 8) <= ov7670_data; --capture first byte of pixel data
-                    --END IF;
-                    state_next <= capture_rgb_byte;
+                    reg_next.rgb_reg(15 DOWNTO 8) <= ov7670_data; --capture first byte of pixel data
+                    reg_next.state <= capture_rgb_byte;
                 END IF;
 
             WHEN capture_rgb_byte =>
                 IF pclk_edge = '1' THEN
 
-                    --debug: just save one pixel of the whole frame
-                    --IF pixel_reg = 320 AND href_cnt_reg = 240 THEN --should be about the centre of the sensor
-                    rgb_next(7 DOWNTO 0) <= ov7670_data; --capture first byte of pixel data
-                    --END IF;
+                    reg_next.rgb_reg(7 DOWNTO 0) <= ov7670_data; --capture first byte of pixel data
 
-                    pixel_next <= pixel_reg + 1; --keep track of current pixel position in line
+                    reg_next.pixel_reg <= reg.pixel_reg + 1; --keep track of current pixel position in line
 
-                    IF pixel_reg = 639 THEN --line finished
-                        href_cnt_next <= href_cnt_reg + 1;
+                    IF reg.pixel_reg = 639 THEN --line finished
+                        reg_next.href_cnt <= reg.href_cnt + 1;
 
-                        IF href_cnt_reg = 479 THEN
-                            state_next <= frame_finished; --frame finished
+                        IF reg.href_cnt = 479 THEN
+                            reg_next.state <= frame_finished; --frame finished
                         ELSE
-                            state_next <= start_capturing; -- wait for start of new line 
+                            reg_next.state <= start_capturing; -- wait for start of new line 
                         END IF;
 
                     ELSE
-                        state_next <= write_to_bram;
+                        reg_next.state <= write_to_bram;
                     END IF;
                 END IF;
 
             WHEN write_to_bram =>
                 wea <= "1"; --write enable bram
-                dina <= rgb_reg(11 DOWNTO 0); --write 12 bit pixel value to bram
-                bram_address_next <= bram_address_reg + 1; --increment address register for next pixel
-                state_next <= capture_line; --capture next pixel
+                dina <= reg.rgb_reg(11 DOWNTO 0); --write 12 bit pixel value to bram
+                reg_next.bram_address <= reg.bram_address + 1; --increment address register for next pixel
+                reg_next.state <= capture_line; --capture next pixel
 
             WHEN frame_finished =>
                 frame_finished_o <= '1';
-                rgb_next <= (OTHERS => '0');
-                bram_address_next <= (OTHERS => '0');
-                state_next <= wait_for_new_frame;
+                reg_next.rgb_reg <= (OTHERS => '0');
+                reg_next.bram_address <= (OTHERS => '0');
+                reg_next.state <= wait_for_new_frame;
 
             WHEN OTHERS => NULL;
         END CASE;
     END PROCESS;
 
-    pixel_data <= rgb_reg;
+    pixel_data <= reg.rgb_reg;
 
 END ARCHITECTURE;
