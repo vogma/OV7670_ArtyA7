@@ -116,32 +116,23 @@ BEGIN
 
     pixel_data_byte <= pixel_data(15 DOWNTO 8) WHEN sw(0) = '0' ELSE
         pixel_data(7 DOWNTO 0);
-    --klappe zu 
-    --39e9  00111 001111 01001
-
-    --taschenlampe 
-    --8c50  10110 101110 10111
-
-    --weiß 
-    --8e55 10001 110010 10101
-
-    --rot
-    --fb43  11111 011010 00011
-
-    --gelb  
-    --8ea7 10001 110101 00111
-
-    --grün
-    --47eb  01000 111111 01011  
-
-    --blau 
-    --441f 01000 100000 11111 --sieht gut aus
-    clock_mccm : clk_generator
+    
+    xclk_pll : clk_generator
     PORT MAP(
         clk_in1 => clk,
         o_xclk_ov7670 => xclk_ov7670,
         reset => '0',
         locked => OPEN
+    );
+
+    vga_pll : vga_clk_gen
+    PORT MAP
+    (-- Clock in ports
+        clk_in1 => clk,
+        reset => '0',
+        locked => OPEN,
+        -- Clock out ports
+        clk_out1 => pxl_clk
     );
 
     ov7670_xclk <= xclk_ov7670;
@@ -179,6 +170,8 @@ BEGIN
     --led <= std_logic_vector(pclk_cnt(11 DOWNTO 8));
     led(2 DOWNTO 0) <= (OTHERS => '0');
 
+
+    --dual port bram
     frame_buffer : blk_mem_gen_1
     PORT MAP(
         clka => clk,
@@ -228,21 +221,7 @@ BEGIN
             o_done => uart_done_tx
         );
 
-    -- vga_testpattern : ENTITY work.vga_testpattern(rtl)
-    --     PORT MAP(
-    --         clk => clk,
-    --         rst => rst,
-    --         pxl_clk => pxl_clk,
-    --         VGA_HS_O => VGA_HS_O,
-    --         VGA_VS_O => VGA_VS_O,
-    --         VGA_R => VGA_R,
-    --         VGA_G => VGA_G,
-    --         VGA_B => VGA_B,
-    --         addrb => addrb,
-    --         doutb => doutb
-    --     );
-
-    vga_own : ENTITY work.vga_own(rtl)
+    vga_controller : ENTITY work.vga_controller(rtl)
         PORT MAP(
             clk => clk,
             rst => rst,
@@ -258,16 +237,6 @@ BEGIN
             addrb => addrb,
             doutb => doutb
         );
-
-    clk_div_inst : vga_clk_gen
-    PORT MAP
-    (-- Clock in ports
-        clk_in1 => clk,
-        reset => '0',
-        locked => OPEN,
-        -- Clock out ports
-        clk_out1 => pxl_clk
-    );
 
     uart_rxd_out <= uart_serial;
 
