@@ -14,7 +14,7 @@ ARCHITECTURE sim OF axi_block_ram_tb IS
     CONSTANT clk_period : TIME := 1 sec / clk_hz;
 
     SIGNAL clk : STD_LOGIC := '1';
-    SIGNAL rst : STD_LOGIC := '1';
+    SIGNAL rst : STD_LOGIC := '0';
 
     COMPONENT blk_mem_gen_0 IS
         PORT (
@@ -97,10 +97,12 @@ ARCHITECTURE sim OF axi_block_ram_tb IS
     SIGNAL s_axi_rvalid : STD_LOGIC := '0';
     SIGNAL s_axi_rready : STD_LOGIC := '0';
 
+    SIGNAL write_data : INTEGER RANGE 0 TO 2_000_000 := 0;
+
 BEGIN
 
     s_aclk <= clk;
-    s_aresetn <= '0';
+    s_aresetn <= rst;
 
     IP : blk_mem_gen_0 PORT MAP(
         rsta_busy => rsta_busy,
@@ -139,23 +141,46 @@ BEGIN
     );
 
     clk <= NOT clk AFTER clk_period / 2;
+
+    s_axi_wdata <= STD_LOGIC_VECTOR(to_unsigned(write_data, s_axi_wdata'length));
+
     SEQUENCER_PROC : PROCESS
     BEGIN
         WAIT FOR clk_period * 2;
 
-        rst <= '0';
+        rst <= '1';
+
+        s_axi_wstrb <= (OTHERS => '1'); --all bytes are valid
+
+        WAIT ON s_axi_awready UNTIL s_axi_awready = '1';
+        WAIT FOR clk_period * 2;
 
         s_axi_awvalid <= '1';
 
-        wait for clk_period*2;
+        WAIT FOR clk_period * 2;
 
         s_axi_awvalid <= '0';
 
+        FOR i IN 0 TO 10 LOOP
+            WAIT UNTIL rising_edge(clk);
+            write_data <= write_data + 1;
+        END LOOP;
 
+        WAIT FOR clk_period * 2;
+        write_data <= 1000;
+        s_axi_wvalid <= '1';
+        s_axi_wlast <= '1';
+        s_axi_bready <= '1';
+        WAIT FOR clk_period * 2;
+
+        s_axi_wvalid <= '0';
+
+        WAIT FOR clk_period * 10;
+        s_axi_arvalid <= '1';
+        s_axi_rready <= '1';
+        WAIT FOR clk_period * 2;
+        --s_axi_arvalid <= '0';
         WAIT FOR clk_period * 1000;
-
-
-        finish;
     END PROCESS;
 
 END ARCHITECTURE;
