@@ -25,71 +25,7 @@
 #
 #    <none>
 #
-# 3. The following remote source files that were added to the original project:-
-#
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/frame_buffer/blk_mem_gen_1.xci"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/vga_clk/vga_clk_gen.xci"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/clk_gen/clk_generator.xci"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/common/common_pkg.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/OV7670_fsm.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/debounce/debounce.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/hexdecoder.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/i2c/i2c_master.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/ov7670_capture.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/ov7670_configuration.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/sseg_cs_generator.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/sseg_controller.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/uart/uart_tx_own.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/vga/vga_controller.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/top.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/constr/Arty-A7-100T-Constraints.xdc"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/camera/ov7670_capture_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga/vga_controller_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga/vga_testpattern_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga_clk_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/dual_port_bram_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/blk_mem_gen_tb.vhd"
-#    "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/camera/ov7670_capture_tb_behav.wcfg"
-#
-#*****************************************************************************************
 
-# Check file required for this script exists
-proc checkRequiredFiles { origin_dir} {
-  set status true
-  set files [list \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/frame_buffer/blk_mem_gen_1.xci" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/vga_clk/vga_clk_gen.xci" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/ip/clk_gen/clk_generator.xci" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/common/common_pkg.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/OV7670_fsm.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/debounce/debounce.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/hexdecoder.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/i2c/i2c_master.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/ov7670_capture.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/camera/ov7670_configuration.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/sseg_cs_generator.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/sseg/sseg_controller.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/uart/uart_tx_own.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/rtl/vga/vga_controller.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/top.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/constr/Arty-A7-100T-Constraints.xdc" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/camera/ov7670_capture_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga/vga_controller_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga/vga_testpattern_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/vga_clk_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/dual_port_bram_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/blk_mem_gen_tb.vhd" \
-   "/home/marco/entwicklung/fpga/OV7670_ArtyA7/OV7670_ArtyA7_srcs/sim/camera/ov7670_capture_tb_behav.wcfg" \
-  ]
-  foreach ifile $files {
-    if { ![file isfile $ifile] } {
-      puts " Could not find remote file $ifile "
-      set status false
-    }
-  }
-
-  return $status
-}
 # Set the reference directory for source file relative paths (by default the value is script directory path)
 set origin_dir "."
 
