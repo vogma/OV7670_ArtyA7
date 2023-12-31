@@ -7,4 +7,4 @@ Due to the excessive use of the available bram (77% of the 100T) the 35T cannot 
 TODO: write pixel data to ddr ram 
 
 To create project file:
-make project
+`make project`
